@@ -1,0 +1,5 @@
+botsdk/*
+logs/*
+output/*
+.idea/*
+config/config.json
