@@ -6,7 +6,6 @@ import (
 	"chatgpt-im-bot/logger"
 	"chatgpt-im-bot/utils"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -28,7 +27,7 @@ func ReceiveMessage(c *gin.Context) {
 	}
 
 	ctx := context.Background()
-	unifyCommand, err := TrasnformToUnifyCommand(str)
+	unifyCommand, err := api.TrasnformToUnifyCommand(str)
 	if err != nil {
 		msg.Reply(err.Error())
 		return
@@ -38,8 +37,15 @@ func ReceiveMessage(c *gin.Context) {
 		msg.Reply(err.Error())
 		return
 	}
-	replyMsg := string(unifyResponse.Data)
-	msg.Reply(replyMsg)
+
+	if unifyResponse.Type == "MSG" {
+		replyMsg := string(unifyResponse.Data)
+		msg.Reply(replyMsg)
+	} else if unifyResponse.Type == "IMAGE" {
+		filePath := string(unifyResponse.Data)
+		msg.ReplyImage(filePath)
+	}
+	return
 }
 func isDirectTargetToBot(msg *QQGroupMessage) bool {
 	if len(msg.Message) < 2 {
@@ -67,8 +73,11 @@ func isNonDirectTargetToBot(msg *QQGroupMessage) bool {
 		return false
 	}
 	str := msg.Message[0].Data["text"]
-	if !strings.HasPrefix(str, "gpt") && !strings.HasPrefix(str, "GPT") {
-		return false
+	if strings.HasPrefix(str, "gpt") || strings.HasPrefix(str, "GPT") {
+		return true
+	}
+	if strings.HasPrefix(str, "draw") || strings.HasPrefix(str, "DRAW") {
+		return true
 	}
 	return true
 }
@@ -89,29 +98,4 @@ func AuthMsg(msg *QQGroupMessage) (string, bool) {
 		return "", false
 	}
 	return isTargetToBot(msg)
-}
-func TrasnformToUnifyCommand(str string) (*api.UnifyCommand, error) {
-	if strings.HasPrefix(str, "GPT") || strings.HasPrefix(str, "gpt") {
-		if len(str) < 4 {
-			return nil, errors.New("msg empty")
-		}
-		command := "GPT"
-		msg := str[3:]
-		return &api.UnifyCommand{
-			Command: command,
-			Data:    []byte(msg),
-		}, nil
-	}
-	if strings.HasPrefix(str, " GPT") || strings.HasPrefix(str, " gpt") {
-		if len(str) < 5 {
-			return nil, errors.New("msg empty")
-		}
-		command := "GPT"
-		msg := str[4:]
-		return &api.UnifyCommand{
-			Command: command,
-			Data:    []byte(msg),
-		}, nil
-	}
-	return nil, errors.New("command not found")
 }

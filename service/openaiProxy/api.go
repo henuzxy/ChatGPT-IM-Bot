@@ -35,3 +35,7 @@ func GetChatGPTSimpleReply(ctx context.Context, msg string) (string, error) {
 	}
 	return resp.Choices[0].Message.Content, nil
 }
+
+func GetOpenAIImage(ctx context.Context, msg string) (string, error) {
+	return "", nil
+}

@@ -34,3 +34,6 @@ func (m *GroupMessage) Send() {
 	defer resp.Body.Close()
 	fmt.Println("Status:", resp.Status)
 }
+func (m *GroupMessage) SendImage(filePath string) {
+
+}
